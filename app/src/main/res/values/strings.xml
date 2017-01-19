@@ -1,3 +1,22 @@
 <resources>
     <string name="app_name">Calloger</string>
+    <string name="label_today">Today</string>
+    <string name="label_yestarday">Yesterday</string>
+    <string name="label_name_unknown">Name: unknown</string>
+    <string name="label_type_incoming">Type: incoming</string>
+    <string name="label_type_outgoing">Type: outgoing</string>
+    <string name="label_type_missed">Type: missed</string>
+    <string name="label_type_dismissed">Type: dismissed</string>
+
+    <string name="template_name">Name: %s</string>
+    <string name="template_number">Number: %s</string>
+    <string name="template_date">Date: %s</string>
+    <string name="template_duration">Duration: %d seconds</string>
+    <string name="template_message">Message: %s</string>
+
+    <string name="open_settings">Open settings</string>
+    <string name="permissions_is_denied">Permissions is denied</string>
+    <string name="message">Message</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
 </resources>

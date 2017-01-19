@@ -1,15 +1,13 @@
 package com.melkiy.calloger.adapters;
 
-import android.content.Context;
-import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.melkiy.calloger.R;
-import com.melkiy.calloger.activities.CallActivity;
 import com.melkiy.calloger.models.Call;
+import com.melkiy.calloger.utils.InstantUtils;
 import com.melkiy.calloger.viewholders.CallHeaderViewHolder;
 import com.melkiy.calloger.viewholders.CallRecyclerViewHolder;
 
@@ -23,19 +21,21 @@ import java.util.List;
 
 public class CallRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
+    public interface OnCallClickListener {
+
+        void onCallClicked(Call call);
+    }
+
     private static final int TYPE_HEADER = 0;
     private static final int TYPE_CALL = 1;
 
-    private Context context;
-    private List<Object> calls = new ArrayList<>();
+    private OnCallClickListener onCallClickListener;
 
-    public CallRecyclerViewAdapter(Context context) {
-        this.context = context;
-    }
+    private final List<Object> data = new ArrayList<>();
 
     @Override
     public int getItemViewType(int position) {
-        if (calls.get(position) instanceof Call) {
+        if (data.get(position) instanceof Call) {
             return TYPE_CALL;
         } else {
             return TYPE_HEADER;
@@ -45,12 +45,11 @@ public class CallRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.V
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        View view;
         if (viewType == TYPE_CALL) {
-            view = inflater.inflate(R.layout.item_call, parent, false);
+            View view = inflater.inflate(R.layout.item_call, parent, false);
             return new CallRecyclerViewHolder(view);
         } else {
-            view = inflater.inflate(R.layout.item_call_header, parent, false);
+            View view = inflater.inflate(R.layout.item_call_header, parent, false);
             return new CallHeaderViewHolder(view);
         }
     }
@@ -58,7 +57,7 @@ public class CallRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.V
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof CallRecyclerViewHolder) {
-            Call call = (Call) calls.get(position);
+            Call call = (Call) data.get(position);
             CallRecyclerViewHolder viewHolder = (CallRecyclerViewHolder) holder;
             viewHolder.name.setText(call.getName() == null ? call.getNumber() : call.getName());
 
@@ -67,36 +66,34 @@ public class CallRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.V
             viewHolder.date.setText(String.format("%02d", hours) + ":" + String.format("%02d", minutes));
 
             switch (call.getType()) {
-                case 1:
+                case INCOMING:
                     viewHolder.icon.setImageResource(R.drawable.ic_call_received_24dp);
                     break;
-                case 2:
+                case OUTGOING:
                     viewHolder.icon.setImageResource(R.drawable.ic_call_made_24dp);
                     break;
-                case 3:
+                case MISSED:
                     viewHolder.icon.setImageResource(R.drawable.ic_call_missed_24dp);
                     break;
-                case 5:
+                case DISMISSED:
                     viewHolder.icon.setImageResource(R.drawable.ic_do_not_disturb_24dp);
+                    break;
             }
 
-            //item click
-            viewHolder.setClickListener(() -> {
-                Intent intent = new Intent(context, CallActivity.class);
-                intent.putExtra("Call", call);
-                context.startActivity(intent);
+            viewHolder.itemView.setOnClickListener(v -> {
+                notifyCallClicked(call);
             });
 
         } else {
-            Instant instant = (Instant) calls.get(position);
+            Instant instant = (Instant) data.get(position);
             Instant now = Instant.now();
             CallHeaderViewHolder viewHolder = (CallHeaderViewHolder) holder;
             if ((now.get(DateTimeFieldType.dayOfYear()) == instant.get(DateTimeFieldType.dayOfYear())) &&
                     (now.get(DateTimeFieldType.year()) == instant.get(DateTimeFieldType.year()))) {
-                viewHolder.date.setText("Today");
+                viewHolder.date.setText(R.string.label_today);
             } else if ((now.get(DateTimeFieldType.dayOfYear()) - 1 == instant.get(DateTimeFieldType.dayOfYear())) &&
                     (now.get(DateTimeFieldType.year()) == instant.get(DateTimeFieldType.year()))) {
-                viewHolder.date.setText("Yesterday");
+                viewHolder.date.setText(R.string.label_yestarday);
             } else {
                 DateTimeFormatter formatter = DateTimeFormat.forPattern("dd MMM yyyy");
                 String date = formatter.print(instant);
@@ -107,11 +104,35 @@ public class CallRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.V
 
     @Override
     public int getItemCount() {
-        return calls.size();
+        return data.size();
     }
 
-    public void setCalls(List<Object> calls) {
-        this.calls = calls;
+    public void setCalls(List<Call> calls) {
+        data.clear();
+        if (!calls.isEmpty()) {
+            Call firstCall = calls.get(0);
+            if (InstantUtils.isToday(firstCall.getDate())) {
+                data.add(firstCall.getDate());
+            }
+            data.add(firstCall);
+            for (int i = 1; i < calls.size(); i++) {
+                Call call = calls.get(i);
+                if (InstantUtils.isDayEquals(call.getDate(), calls.get(i - 1).getDate())) {
+                    data.add(call.getDate());
+                }
+                data.add(call);
+            }
+        }
         notifyDataSetChanged();
+    }
+
+    public void setOnCallClickListener(OnCallClickListener listener) {
+        onCallClickListener = listener;
+    }
+
+    private void notifyCallClicked(Call call) {
+        if (onCallClickListener != null) {
+            onCallClickListener.onCallClicked(call);
+        }
     }
 }

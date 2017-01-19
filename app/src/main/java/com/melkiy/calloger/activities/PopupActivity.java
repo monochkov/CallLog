@@ -7,72 +7,65 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.CallLog;
 import android.support.v4.app.ActivityCompat;
-import android.widget.Button;
 import android.widget.EditText;
 
 import com.melkiy.calloger.R;
-import com.melkiy.calloger.database.CallDatabaseHelper;
+import com.melkiy.calloger.database.CallDatabase;
 import com.melkiy.calloger.models.Call;
 
 import org.joda.time.Instant;
 
 public class PopupActivity extends Activity {
 
-    private Button ok, cancel;
-    private EditText comment;
-
-    private CallDatabaseHelper databaseHelper;
+    private CallDatabase databaseHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_popup);
 
-        ok = (Button) findViewById(R.id.ok);
-        cancel = (Button) findViewById(R.id.cancel);
-        comment = (EditText) findViewById(R.id.comment);
+        databaseHelper = new CallDatabase(this);
 
-        databaseHelper = new CallDatabaseHelper(this);
+        EditText comment = (EditText) findViewById(R.id.comment);
 
-        ok.setOnClickListener(v -> {
+        findViewById(R.id.ok).setOnClickListener(v -> {
             String message = comment.getText().toString();
             if (!message.isEmpty()) {
                 Call call = getLastCall();
                 call.setMessage(message);
                 databaseHelper.insert(call);
-                finish();
             }
+            finish();
         });
 
-        cancel.setOnClickListener(v -> {
+        findViewById(R.id.cancel).setOnClickListener(v -> {
             finish();
         });
     }
 
     private Call getLastCall() {
-        if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(PopupActivity.this,
-                    new String[]{Manifest.permission.READ_CALL_LOG},
-                    1);
+        if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_GRANTED) {
+            Cursor cursor = getApplicationContext().getContentResolver().query(CallLog.Calls.CONTENT_URI,
+                    null, null, null, CallLog.Calls.DEFAULT_SORT_ORDER);
+            Call call = fromCursor(cursor);
+            cursor.close();
+            return call;
         }
-        Cursor cursor = getApplicationContext().getContentResolver().query(CallLog.Calls.CONTENT_URI,
-                null, null, null, CallLog.Calls.DEFAULT_SORT_ORDER);
-        Call call = fromCursor(cursor);
-        cursor.close();
-        return call;
+        return null;
     }
 
     private Call fromCursor(Cursor cursor) {
-        Call call = new Call();
-        while (cursor.moveToNext()) {
+        if (cursor.moveToNext()) {
+            Call call = new Call();
             call.setName(cursor.getString(cursor.getColumnIndex(CallLog.Calls.CACHED_NAME)));
             call.setNumber(cursor.getString(cursor.getColumnIndex(CallLog.Calls.NUMBER)));
-            call.setType(cursor.getInt(cursor.getColumnIndex(CallLog.Calls.TYPE)));
+            call.setType(Call.Type.fromValue(cursor.getInt(cursor.getColumnIndex(CallLog.Calls.TYPE))));
             String callDate = cursor.getString(cursor.getColumnIndex(CallLog.Calls.DATE));
             call.setDate(new Instant(Long.valueOf(callDate)));
-            call.setDurationInSec(cursor.getInt(cursor.getColumnIndex(CallLog.Calls.DURATION)));
-            break;
+            call.setDurationInSeconds(cursor.getInt(cursor.getColumnIndex(CallLog.Calls.DURATION)));
+            return call;
+        } else {
+            return null;
         }
-        return call;
     }
 }

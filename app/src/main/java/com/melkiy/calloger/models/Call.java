@@ -8,9 +8,9 @@ public class Call implements Serializable {
 
     private String name;
     private String number;
-    private int type;
+    private Type type;
     private Instant date;
-    private int durationInSec;
+    private int durationInSeconds;
     private String message;
 
     public String getName() {
@@ -29,11 +29,11 @@ public class Call implements Serializable {
         this.number = number;
     }
 
-    public int getType() {
+    public Type getType() {
         return type;
     }
 
-    public void setType(int type) {
+    public void setType(Type type) {
         this.type = type;
     }
 
@@ -45,12 +45,12 @@ public class Call implements Serializable {
         this.date = date;
     }
 
-    public int getDurationInSec() {
-        return durationInSec;
+    public int getDurationInSeconds() {
+        return durationInSeconds;
     }
 
-    public void setDurationInSec(int durationInSec) {
-        this.durationInSec = durationInSec;
+    public void setDurationInSeconds(int durationInSecends) {
+        this.durationInSeconds = durationInSecends;
     }
 
     public String getMessage() {
@@ -68,8 +68,31 @@ public class Call implements Serializable {
                 ", number='" + number + '\'' +
                 ", type=" + type +
                 ", date=" + date +
-                ", durationInSec=" + durationInSec +
+                ", durationInSeconds=" + durationInSeconds +
                 ", message='" + message + '\'' +
                 '}';
+    }
+
+    public enum Type {
+        INCOMING(1), OUTGOING(2), MISSED(3), DISMISSED(5);
+
+        private final int value;
+
+        Type(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+
+        public static Type fromValue(int value) {
+            for (Type type : values()) {
+                if (type.getValue() == value) {
+                    return type;
+                }
+            }
+            throw new IllegalStateException("There is no type with value " + value);
+        }
     }
 }
