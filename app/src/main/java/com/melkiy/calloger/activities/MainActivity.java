@@ -14,7 +14,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.widget.Toast;
+import android.view.View;
+import android.widget.LinearLayout;
 
 import com.melkiy.calloger.R;
 import com.melkiy.calloger.adapters.CallRecyclerViewAdapter;
@@ -36,7 +37,7 @@ public class MainActivity extends AppCompatActivity implements
 
     private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView recyclerView;
-    //private LinearLayout settingsLayout;
+    private LinearLayout settingsLayout;
     private CallRecyclerViewAdapter adapter;
 
     private CallDatabase databaseHelper;
@@ -50,7 +51,7 @@ public class MainActivity extends AppCompatActivity implements
 
         databaseHelper = new CallDatabase(this);
 
-        //settingsLayout = (LinearLayout) findViewById(R.id.settings_layout);
+        settingsLayout = (LinearLayout) findViewById(R.id.settings_layout);
         swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh);
         recyclerView = (RecyclerView) findViewById(R.id.caller_recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -63,21 +64,15 @@ public class MainActivity extends AppCompatActivity implements
         swipeRefreshLayout.setColorSchemeColors(
                 Color.RED, Color.GREEN, Color.BLUE, Color.CYAN);
 
-        /*findViewById(R.id.open_settings_button).setOnClickListener(v -> {
-            Intent intent = new Intent();
-            intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-            Uri uri = Uri.fromParts("package", getPackageName(), null);
-            intent.setData(uri);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-        });*/
-
-        checkPermissions();
+        findViewById(R.id.open_settings_button).setOnClickListener(v -> {
+            openSettingsActivity();
+        });
     }
 
     @Override
     public void onStart() {
         super.onStart();
+        checkPermissions();
         EventBus.getDefault().register(this);
     }
 
@@ -97,21 +92,18 @@ public class MainActivity extends AppCompatActivity implements
     public void onMessageEvent(Call call) {
         calls.add(0, call);
         adapter.setCalls(calls);
-    };
+    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
             case PERMISSIONS_REQUEST_READ_CALL_LOG: {
-                // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    //showRecyclerView();
+                    showRecyclerView();
                     loadCalls();
                 } else {
-                    //showSettingsLayout();
-                    Toast.makeText(MainActivity.this, "Allow permission", Toast.LENGTH_LONG).show();
-                    openSettingsActivity();
+                    showSettingsLayout();
                 }
                 break;
             }
@@ -133,17 +125,19 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void checkPermissions() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_CALL_LOG) !=
+                PackageManager.PERMISSION_GRANTED) {
+
             ActivityCompat.requestPermissions(MainActivity.this,
                     new String[]{Manifest.permission.READ_CALL_LOG},
                     PERMISSIONS_REQUEST_READ_CALL_LOG);
         } else {
-            //showRecyclerView();
+            showRecyclerView();
             loadCalls();
         }
     }
 
-    /*private void showRecyclerView() {
+    private void showRecyclerView() {
         settingsLayout.setVisibility(View.GONE);
         recyclerView.setVisibility(View.VISIBLE);
     }
@@ -151,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements
     private void showSettingsLayout() {
         recyclerView.setVisibility(View.GONE);
         settingsLayout.setVisibility(View.VISIBLE);
-    }*/
+    }
 
     @Override
     public void onCallClicked(Call call) {

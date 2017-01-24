@@ -26,11 +26,10 @@ public class IncomingCallBroadcastReceiver extends BroadcastReceiver {
         @Override
         public void onCallStateChanged(int state, String incomingNumber) {
             switch (state) {
-                case TelephonyManager.CALL_STATE_IDLE:
-                    Intent intent = new Intent(context, PopupActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-                    context.startActivity(intent);
+                case TelephonyManager.CALL_STATE_IDLE: {
+                    PopupActivity.show(context);
                     break;
+                }
             }
             telephonyManager.listen(listener, PhoneStateListener.LISTEN_NONE);
         }

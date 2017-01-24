@@ -2,6 +2,8 @@ package com.melkiy.calloger.activities;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -19,6 +21,10 @@ import org.joda.time.Instant;
 public class PopupActivity extends Activity {
 
     private CallDatabase databaseHelper;
+
+    public static void show(Context context) {
+        context.startActivity(new Intent(context, PopupActivity.class));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
