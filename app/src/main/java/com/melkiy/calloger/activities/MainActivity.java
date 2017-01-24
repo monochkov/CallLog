@@ -21,6 +21,13 @@ import com.melkiy.calloger.adapters.CallRecyclerViewAdapter;
 import com.melkiy.calloger.database.CallDatabase;
 import com.melkiy.calloger.models.Call;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity implements
         SwipeRefreshLayout.OnRefreshListener,
         CallRecyclerViewAdapter.OnCallClickListener {
@@ -33,6 +40,8 @@ public class MainActivity extends AppCompatActivity implements
     private CallRecyclerViewAdapter adapter;
 
     private CallDatabase databaseHelper;
+
+    private List<Call> calls = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,10 +76,28 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        EventBus.getDefault().unregister(this);
+    }
+
+    @Override
     public void onRefresh() {
         checkPermissions();
         swipeRefreshLayout.setRefreshing(false);
     }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageEvent(Call call) {
+        calls.add(0, call);
+        adapter.setCalls(calls);
+    };
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -92,7 +119,8 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void loadCalls() {
-        adapter.setCalls(databaseHelper.getAll());
+        calls = databaseHelper.getAll();
+        adapter.setCalls(calls);
     }
 
     private void openSettingsActivity() {

@@ -13,6 +13,7 @@ import com.melkiy.calloger.R;
 import com.melkiy.calloger.database.CallDatabase;
 import com.melkiy.calloger.models.Call;
 
+import org.greenrobot.eventbus.EventBus;
 import org.joda.time.Instant;
 
 public class PopupActivity extends Activity {
@@ -34,6 +35,7 @@ public class PopupActivity extends Activity {
                 Call call = getLastCall();
                 call.setMessage(message);
                 databaseHelper.insert(call);
+                EventBus.getDefault().post(call);
             }
             finish();
         });
