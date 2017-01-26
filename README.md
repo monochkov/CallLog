@@ -1,4 +1,19 @@
-/*
+# CallLog
+<p>This is Android application that allows you to view call log and leave a comment after call.</p>
+<p>Features:</p>
+<ul>
+<li>Intercept all call (incoming, outgoing, missed, dismissed)</li>
+<li>Leave a comment after each call</li>
+<li>Write call with comment to call list</li>
+<li>View full information about call</li>
+</ul>
+<h2>Dependencies</h2>
+<ul>
+<li><b>Retrofit -</b> https://github.com/square/retrofit</li>
+<li><b>JodaTime -</b> https://github.com/JodaOrg/joda-time</li>
+</ul>
+<h2>License</h2>
+
     Copyright (C) 2015 Ihor Monochkov
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,23 +27,3 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-*/
-
-package com.melkiy.calloger.viewholders;
-
-import android.support.v7.widget.RecyclerView;
-import android.view.View;
-import android.widget.TextView;
-
-import com.melkiy.calloger.R;
-
-public class CallHeaderViewHolder extends RecyclerView.ViewHolder {
-
-    public TextView date;
-
-    public CallHeaderViewHolder(View itemView) {
-        super(itemView);
-
-        date = (TextView) itemView.findViewById(R.id.date);
-    }
-}
