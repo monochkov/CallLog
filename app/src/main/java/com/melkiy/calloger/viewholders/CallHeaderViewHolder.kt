@@ -14,26 +14,21 @@
     limitations under the License.
 */
 
-package com.melkiy.calloger.viewholders;
+package com.melkiy.calloger.viewholders
 
-import android.support.v7.widget.RecyclerView;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.support.v7.widget.RecyclerView
+import android.view.View
+import android.widget.TextView
+import butterknife.BindView
+import butterknife.ButterKnife
+import com.melkiy.calloger.R
 
-import com.melkiy.calloger.R;
+class CallHeaderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
-public class CallRecyclerViewHolder extends RecyclerView.ViewHolder {
+    @BindView(R.id.date)
+    lateinit var date: TextView
 
-    public final TextView name;
-    public final TextView date;
-    public final ImageView icon;
-
-    public CallRecyclerViewHolder(View view) {
-        super(view);
-
-        name = (TextView) view.findViewById(R.id.name);
-        date = (TextView) view.findViewById(R.id.date);
-        icon = (ImageView) view.findViewById(R.id.type);
+    init {
+        ButterKnife.bind(itemView)
     }
 }

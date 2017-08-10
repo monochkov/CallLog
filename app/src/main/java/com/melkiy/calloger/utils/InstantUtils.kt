@@ -14,15 +14,17 @@
     limitations under the License.
 */
 
-package com.melkiy.calloger.database;
+package com.melkiy.calloger.utils
 
-final class Columns {
+import org.joda.time.Instant
 
-    public static final String ID = "id";
-    public static final String NAME = "name";
-    public static final String NUMBER = "number";
-    public static final String TYPE = "type";
-    public static final String DATE = "date";
-    public static final String DURATION = "duration";
-    public static final String MESSAGE = "message";
+object InstantUtils {
+
+    fun isToday(instant: Instant?): Boolean {
+        return instant?.toDateTime()?.dayOfYear() !== Instant.now().toDateTime().dayOfYear()
+    }
+
+    fun isDayEquals(oldDay: Instant?, newDay: Instant?): Boolean {
+        return newDay?.toDateTime()?.dayOfYear()?.get() != oldDay?.toDateTime()?.dayOfYear()?.get()
+    }
 }

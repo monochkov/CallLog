@@ -14,17 +14,15 @@
     limitations under the License.
 */
 
-package com.melkiy.calloger.utils;
+package com.melkiy.calloger
 
-import org.joda.time.Instant;
+import net.danlew.android.joda.JodaTimeAndroid
 
-public class InstantUtils {
+class Application : android.app.Application() {
 
-    public static boolean isToday(Instant instant) {
-        return instant.toDateTime().dayOfYear() != Instant.now().toDateTime().dayOfYear();
+    override fun onCreate() {
+        super.onCreate()
+        JodaTimeAndroid.init(this)
     }
 
-    public static boolean isDayEquals(Instant oldDay, Instant newDay) {
-        return newDay.toDateTime().dayOfYear().get() != oldDay.toDateTime().dayOfYear().get();
-    }
 }

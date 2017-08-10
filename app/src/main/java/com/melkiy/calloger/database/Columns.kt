@@ -14,21 +14,15 @@
     limitations under the License.
 */
 
-package com.melkiy.calloger.viewholders;
+package com.melkiy.calloger.database
 
-import android.support.v7.widget.RecyclerView;
-import android.view.View;
-import android.widget.TextView;
+internal object Columns {
 
-import com.melkiy.calloger.R;
-
-public class CallHeaderViewHolder extends RecyclerView.ViewHolder {
-
-    public TextView date;
-
-    public CallHeaderViewHolder(View itemView) {
-        super(itemView);
-
-        date = (TextView) itemView.findViewById(R.id.date);
-    }
+    val ID = "id"
+    val NAME = "name"
+    val NUMBER = "number"
+    val TYPE = "type"
+    val DATE = "date"
+    val DURATION = "duration"
+    val MESSAGE = "message"
 }

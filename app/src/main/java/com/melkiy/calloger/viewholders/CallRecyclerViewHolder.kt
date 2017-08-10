@@ -14,11 +14,27 @@
     limitations under the License.
 */
 
-package com.melkiy.calloger.utils;
+package com.melkiy.calloger.viewholders
 
-public class StringUtils {
+import android.support.v7.widget.RecyclerView
+import android.view.View
+import android.widget.ImageView
+import android.widget.TextView
+import butterknife.BindView
+import butterknife.ButterKnife
 
-    public static boolean isNullOrEmpty(String s) {
-        return s == null || s.isEmpty();
+import com.melkiy.calloger.R
+
+class CallRecyclerViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+
+    @BindView(R.id.name)
+    lateinit var name: TextView
+    @BindView(R.id.date)
+    lateinit var date: TextView
+    @BindView(R.id.type)
+    lateinit var icon: ImageView
+
+    init {
+        ButterKnife.bind(view)
     }
 }
