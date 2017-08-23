@@ -40,64 +40,59 @@ import org.joda.time.Instant
 class PopupActivity : Activity() {
 
     @BindView(R.id.comment)
-    lateinit var comment : EditText
+    lateinit var comment: EditText
 
-    private var databaseHelper: CallDatabase? = null
+    private lateinit var databaseHelper: CallDatabase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_popup)
         ButterKnife.bind(this)
-        databaseHelper = CallDatabase.getInstance(this)
+
+        databaseHelper = CallDatabase.getInstance(this.applicationContext)
     }
 
-    private val lastCall: Call?
-        get() {
-            if (ActivityCompat.checkSelfPermission(applicationContext, Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_GRANTED) {
-                val cursor = applicationContext.contentResolver.query(CallLog.Calls.CONTENT_URI, null, null, null, CallLog.Calls.DEFAULT_SORT_ORDER)
-                val call = fromCursor(cursor)
-                cursor!!.close()
-                return call
-            }
-            return null
-        }
-
-    private fun fromCursor(cursor: Cursor): Call? {
-        if (cursor.moveToNext()) {
-            val call = Call()
-            call.name = cursor.getString(cursor.getColumnIndex(CallLog.Calls.CACHED_NAME))
-            call.number = cursor.getString(cursor.getColumnIndex(CallLog.Calls.NUMBER))
-            call.type = Call.Type.fromValue(cursor.getInt(cursor.getColumnIndex(CallLog.Calls.TYPE)))
-            val callDate = cursor.getString(cursor.getColumnIndex(CallLog.Calls.DATE))
-            call.date = Instant(callDate)
-            call.durationInSeconds = cursor.getInt(cursor.getColumnIndex(CallLog.Calls.DURATION))
+    private fun getLastCall(): Call? {
+        if (ActivityCompat.checkSelfPermission(applicationContext, Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_GRANTED) {
+            val cursor = applicationContext.contentResolver.query(CallLog.Calls.CONTENT_URI, null, null, null, CallLog.Calls.DEFAULT_SORT_ORDER)
+            val call = fromCursor(cursor)
+            cursor.close()
             return call
-        } else {
-            return null
         }
+        return null
+    }
+
+    private fun fromCursor(cursor: Cursor): Call {
+        return Call(name = cursor.getString(cursor.getColumnIndex(CallLog.Calls.CACHED_NAME)),
+                number = cursor.getString(cursor.getColumnIndex(CallLog.Calls.NUMBER)),
+                type = Call.Type.fromValue(cursor.getInt(cursor.getColumnIndex(CallLog.Calls.TYPE))),
+                date = Instant(cursor.getLong(cursor.getColumnIndex(CallLog.Calls.DATE))),
+                durationInSeconds = cursor.getInt(cursor.getColumnIndex(CallLog.Calls.DURATION)))
     }
 
     @OnClick(R.id.ok)
     fun onOkClick() {
         val message = comment.text.toString()
         if (message.isNotEmpty()) {
-            val call = lastCall
-            call?.message = message
-            databaseHelper!!.insert(call)
-            EventBus.getDefault().post(call)
+            val call = getLastCall()
+            if (call != null) {
+                val newCall = call.copy(message = message)
+                databaseHelper.insert(newCall)
+                EventBus.getDefault().post(newCall)
+            }
         }
         finish()
     }
 
     @OnClick(R.id.cancel)
-    fun onCancelClick() {
-        finish()
-    }
+    fun onCancelClick() = finish()
 
     companion object {
 
         fun show(context: Context) {
-            context.startActivity(Intent(context, PopupActivity::class.java))
+            val intent = Intent(context, PopupActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK;
+            context.startActivity(intent)
         }
     }
 }

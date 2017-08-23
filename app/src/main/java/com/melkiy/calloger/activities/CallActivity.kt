@@ -42,7 +42,7 @@ class CallActivity : AppCompatActivity() {
     @BindView(R.id.comment)
     lateinit var message: TextView
 
-    private var call: Call? = null
+    private lateinit var call: Call
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,7 +50,7 @@ class CallActivity : AppCompatActivity() {
         ButterKnife.bind(this)
 
         initToolbar()
-        getExtras()
+        initData()
         initializeFields()
     }
 
@@ -65,30 +65,42 @@ class CallActivity : AppCompatActivity() {
     }
 
     private fun initToolbar() {
-        supportActionBar!!.setHomeButtonEnabled(true)
-        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.apply {
+            setHomeButtonEnabled(true)
+            setDisplayHomeAsUpEnabled(true)
+        }
     }
 
-    private fun getExtras() {
+    private fun initData() {
+        if (intent == null) {
+            throw IllegalStateException("Intent is null")
+        }
+        if (intent.extras == null) {
+            throw IllegalStateException("Extras is null")
+        }
+        if (!intent.extras.containsKey(CALL_EXTRA)) {
+            throw IllegalStateException("Intent does not has value with key $CALL_EXTRA")
+        }
         call = intent.getSerializableExtra(CALL_EXTRA) as Call
     }
 
     private fun initializeFields() {
-        if (call?.name.isNullOrEmpty()) {
+        val call = call
+        if (call.name.isNullOrEmpty()) {
             name.text = getString(R.string.label_name_unknown)
         } else {
-            name.text = getString(R.string.template_name, call?.name)
+            name.text = getString(R.string.template_name, call.name)
         }
-        number.text = getString(R.string.template_number, call?.number)
-        when (call?.type) {
+        number.text = getString(R.string.template_number, call.number)
+        when (call.type) {
             Call.Type.INCOMING -> type.text = getString(R.string.label_type_incoming)
             Call.Type.OUTGOING -> type.text = getString(R.string.label_type_outgoing)
             Call.Type.MISSED -> type.text = getString(R.string.label_type_missed)
             Call.Type.DISMISSED -> type.text = getString(R.string.label_type_dismissed)
         }
-        date.text = getString(R.string.template_date, call?.date)
-        duration.text = getString(R.string.template_duration, call?.durationInSeconds)
-        message.text = getString(R.string.template_message, call?.message)
+        date.text = getString(R.string.template_date, call.date)
+        duration.text = getString(R.string.template_duration, call.durationInSeconds)
+        message.text = getString(R.string.template_message, call.message)
     }
 
     companion object {

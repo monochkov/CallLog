@@ -20,8 +20,10 @@ import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import com.melkiy.calloger.R
+import com.melkiy.calloger.extensions.isDayNotEquals
+import com.melkiy.calloger.extensions.isNotToday
+import com.melkiy.calloger.listeners.OnCallClickListener
 import com.melkiy.calloger.models.Call
-import com.melkiy.calloger.utils.InstantUtils
 import com.melkiy.calloger.viewholders.CallHeaderViewHolder
 import com.melkiy.calloger.viewholders.CallRecyclerViewHolder
 import org.joda.time.DateTimeFieldType
@@ -31,82 +33,75 @@ import java.util.*
 
 class CallRecyclerViewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    interface OnCallClickListener {
-
-        fun onCallClicked(call: Call)
-    }
-
-    private var onCallClickListener: OnCallClickListener? = null
+    var onCallClickListener: OnCallClickListener? = null
 
     private val data = ArrayList<Any>()
 
-    override fun getItemViewType(position: Int): Int {
-        if (data[position] is Call) {
-            return TYPE_CALL
-        } else {
-            return TYPE_HEADER
-        }
-    }
+    override fun getItemViewType(position: Int): Int =
+            if (data[position] is Call) {
+                ItemType.TYPE_CALL.value
+            } else {
+                ItemType.TYPE_HEADER.value
+            }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
-        if (viewType == TYPE_CALL) {
-            val view = inflater.inflate(R.layout.item_call, parent, false)
-            return CallRecyclerViewHolder(view)
-        } else {
-            val view = inflater.inflate(R.layout.item_call_header, parent, false)
-            return CallHeaderViewHolder(view)
+        return when (viewType) {
+            ItemType.TYPE_CALL.value -> CallRecyclerViewHolder(inflater.inflate(R.layout.item_call, parent, false))
+            else -> CallHeaderViewHolder(inflater.inflate(R.layout.item_call_header, parent, false))
         }
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         if (holder is CallRecyclerViewHolder) {
-            val call = data[position] as Call
-            holder.name.text = if (call.name == null) call.number else call.name
+            holder.let {
+                val call = data[position] as Call
+                it.name.text = call.name ?: call.number
 
-            val hours = call.date?.get(DateTimeFieldType.hourOfDay())
-            val minutes = call.date?.get(DateTimeFieldType.minuteOfHour())
-            holder.date.text = String.format("%02d", hours) + ":" + String.format("%02d", minutes)
+                val hours = call.date.get(DateTimeFieldType.hourOfDay())
+                val minutes = call.date.get(DateTimeFieldType.minuteOfHour())
+                it.date.text = String.format("%02d", hours) + ":" + String.format("%02d", minutes)
 
-            when (call.type) {
-                Call.Type.INCOMING -> holder.icon.setImageResource(R.drawable.ic_call_received_24dp)
-                Call.Type.OUTGOING -> holder.icon.setImageResource(R.drawable.ic_call_made_24dp)
-                Call.Type.MISSED -> holder.icon.setImageResource(R.drawable.ic_call_missed_24dp)
-                Call.Type.DISMISSED -> holder.icon.setImageResource(R.drawable.ic_do_not_disturb_24dp)
+                when (call.type) {
+                    Call.Type.INCOMING -> it.icon.setImageResource(R.drawable.ic_call_received_24dp)
+                    Call.Type.OUTGOING -> it.icon.setImageResource(R.drawable.ic_call_made_24dp)
+                    Call.Type.MISSED -> it.icon.setImageResource(R.drawable.ic_call_missed_24dp)
+                    Call.Type.DISMISSED -> it.icon.setImageResource(R.drawable.ic_do_not_disturb_24dp)
+                }
+
+                it.itemView.setOnClickListener { notifyCallClicked(call) }
             }
 
-            holder.itemView.setOnClickListener { _ -> notifyCallClicked(call) }
-
         } else if (holder is CallHeaderViewHolder) {
-            val instant = data[position] as Instant
-            val now = Instant.now()
-            if (now.get(DateTimeFieldType.dayOfYear()) == instant.get(DateTimeFieldType.dayOfYear()) && now.get(DateTimeFieldType.year()) == instant.get(DateTimeFieldType.year())) {
-                holder.date.setText(R.string.label_today)
-            } else if (now.get(DateTimeFieldType.dayOfYear()) - 1 == instant.get(DateTimeFieldType.dayOfYear()) && now.get(DateTimeFieldType.year()) == instant.get(DateTimeFieldType.year())) {
-                holder.date.setText(R.string.label_yestarday)
-            } else {
-                val formatter = DateTimeFormat.forPattern("dd MMM yyyy")
-                val date = formatter.print(instant)
-                holder.date.text = date
+            holder.let {
+                val instant = data[position] as Instant
+                val now = Instant.now()
+                if (now.get(DateTimeFieldType.dayOfYear()) == instant.get(DateTimeFieldType.dayOfYear()) && now.get(DateTimeFieldType.year()) == instant.get(DateTimeFieldType.year())) {
+                    it.date.setText(R.string.label_today)
+                } else if (now.get(DateTimeFieldType.dayOfYear()) - 1 == instant.get(DateTimeFieldType.dayOfYear()) && now.get(DateTimeFieldType.year()) == instant.get(DateTimeFieldType.year())) {
+                    it.date.setText(R.string.label_yestarday)
+                } else {
+                    val formatter = DateTimeFormat.forPattern("dd MMM yyyy")
+                    val date = formatter.print(instant)
+                    it.date.text = date
+                }
             }
         }
     }
 
-    override fun getItemCount(): Int {
-        return data.size
-    }
+    override fun getItemCount() = data.size
 
     fun setCalls(calls: List<Call>) {
         data.clear()
         if (calls.isNotEmpty()) {
-            val firstCall = calls[0]
-            if (InstantUtils.isToday(firstCall.date)) {
+            val firstCall = calls.first()
+            if (firstCall.date.isNotToday()) {
                 data.add(firstCall.date as Any)
             }
             data.add(firstCall)
             for (i in 1..calls.size - 1) {
                 val call = calls[i]
-                if (InstantUtils.isDayEquals(call.date, calls[i - 1].date)) {
+                if (call.date.isDayNotEquals(calls[i - 1].date)) {
                     data.add(call.date as Any)
                 }
                 data.add(call)
@@ -115,17 +110,9 @@ class CallRecyclerViewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() 
         notifyDataSetChanged()
     }
 
-    fun setOnCallClickListener(listener: OnCallClickListener) {
-        onCallClickListener = listener
-    }
+    private fun notifyCallClicked(call: Call) = onCallClickListener?.onCallClicked(call)
 
-    private fun notifyCallClicked(call: Call) {
-        onCallClickListener!!.onCallClicked(call)
-    }
-
-    companion object {
-
-        private val TYPE_HEADER = 0
-        private val TYPE_CALL = 1
+    enum class ItemType(val value: Int) {
+        TYPE_HEADER(0), TYPE_CALL(1)
     }
 }

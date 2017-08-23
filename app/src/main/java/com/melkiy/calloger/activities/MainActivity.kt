@@ -28,7 +28,6 @@ import android.support.v4.widget.SwipeRefreshLayout
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
-import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import butterknife.BindView
@@ -36,13 +35,13 @@ import butterknife.ButterKnife
 import com.melkiy.calloger.R
 import com.melkiy.calloger.adapters.CallRecyclerViewAdapter
 import com.melkiy.calloger.database.CallDatabase
+import com.melkiy.calloger.extensions.isVisible
+import com.melkiy.calloger.listeners.OnCallClickListener
 import com.melkiy.calloger.models.Call
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
-import java.util.*
 
-class MainActivity : AppCompatActivity(),
-        SwipeRefreshLayout.OnRefreshListener, CallRecyclerViewAdapter.OnCallClickListener {
+class MainActivity : AppCompatActivity(), OnCallClickListener {
 
     @BindView(R.id.swipe_refresh)
     lateinit var swipeRefreshLayout: SwipeRefreshLayout
@@ -53,9 +52,9 @@ class MainActivity : AppCompatActivity(),
     @BindView(R.id.open_settings_button)
     lateinit var openSettingButton: Button
 
-    private var adapter: CallRecyclerViewAdapter = CallRecyclerViewAdapter()
-    private var databaseHelper: CallDatabase? = null
-    private var calls: MutableList<Call> = ArrayList()
+    private val adapter = CallRecyclerViewAdapter()
+    private val calls = ArrayList<Call>()
+    private lateinit var databaseHelper: CallDatabase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,7 +64,8 @@ class MainActivity : AppCompatActivity(),
         initRecyclerView()
         initSwipeRefreshLayout()
         setListeners()
-        databaseHelper = CallDatabase.getInstance(this)
+
+        databaseHelper = CallDatabase.getInstance(this.applicationContext)
     }
 
     override fun onStart() {
@@ -77,11 +77,6 @@ class MainActivity : AppCompatActivity(),
     override fun onStop() {
         super.onStop()
         EventBus.getDefault().unregister(this)
-    }
-
-    override fun onRefresh() {
-        checkPermissions()
-        swipeRefreshLayout.isRefreshing = false
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -97,9 +92,7 @@ class MainActivity : AppCompatActivity(),
         }
     }
 
-    override fun onCallClicked(call: Call) {
-        CallActivity.show(this, call)
-    }
+    override fun onCallClicked(call: Call) = CallActivity.show(this, call)
 
     @Subscribe
     fun onMessageEvent(call: Call) {
@@ -115,22 +108,26 @@ class MainActivity : AppCompatActivity(),
             it.layoutManager = LinearLayoutManager(this)
             it.adapter = adapter
         }
-        adapter.setOnCallClickListener(this)
     }
 
     private fun initSwipeRefreshLayout() {
-        swipeRefreshLayout.let {
-            it.setOnRefreshListener(this)
-            it.setColorSchemeColors(Color.RED, Color.GREEN, Color.BLUE, Color.CYAN)
+        swipeRefreshLayout.apply {
+            setOnRefreshListener({
+                checkPermissions()
+                swipeRefreshLayout.isRefreshing = false
+            })
+            setColorSchemeColors(Color.RED, Color.GREEN, Color.BLUE, Color.CYAN)
         }
     }
 
     private fun setListeners() {
-        openSettingButton.setOnClickListener { _ -> openSettingsActivity() }
+        openSettingButton.setOnClickListener { openSettingsActivity() }
+        adapter.onCallClickListener = this
     }
 
     private fun loadCalls() {
-        calls = databaseHelper!!.all
+        calls.clear()
+        calls.addAll(databaseHelper.getAllCalls())
         adapter.setCalls(calls)
     }
 
@@ -143,43 +140,24 @@ class MainActivity : AppCompatActivity(),
         startActivity(intent)
     }
 
-    private fun checkPermissions() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(this@MainActivity,
-                    arrayOf(Manifest.permission.READ_CALL_LOG),
-                    PERMISSIONS_REQUEST_READ_CALL_LOG)
-        } else {
-            showRecyclerView()
-            loadCalls()
-        }
-    }
+    private fun checkPermissions() =
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        arrayOf(Manifest.permission.READ_CALL_LOG),
+                        PERMISSIONS_REQUEST_READ_CALL_LOG)
+            } else {
+                showRecyclerView()
+                loadCalls()
+            }
 
     private fun showRecyclerView() {
-        settingsLayout.visibility(false)
-        recyclerView.visibility(true)
+        settingsLayout.isVisible = false
+        recyclerView.isVisible = true
     }
 
     private fun showSettingsLayout() {
-        recyclerView.visibility(false)
-        settingsLayout.visibility(true)
-    }
-
-    /*
-    Extensions methods
-    */
-    fun LinearLayout.visibility(isVisible: Boolean) {
-        if (isVisible)
-            this.visibility = View.VISIBLE
-        else
-            this.visibility = View.GONE
-    }
-
-    fun RecyclerView.visibility(isVisible: Boolean) {
-        if (isVisible)
-            this.visibility = View.VISIBLE
-        else
-            this.visibility = View.GONE
+        recyclerView.isVisible = false
+        settingsLayout.isVisible = true
     }
 
     companion object {

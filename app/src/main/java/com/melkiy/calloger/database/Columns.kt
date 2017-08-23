@@ -18,11 +18,11 @@ package com.melkiy.calloger.database
 
 internal object Columns {
 
-    val ID = "id"
-    val NAME = "name"
-    val NUMBER = "number"
-    val TYPE = "type"
-    val DATE = "date"
-    val DURATION = "duration"
-    val MESSAGE = "message"
+    const val ID = "id"
+    const val NAME = "name"
+    const val NUMBER = "number"
+    const val TYPE = "value"
+    const val DATE = "date"
+    const val DURATION = "duration"
+    const val MESSAGE = "message"
 }

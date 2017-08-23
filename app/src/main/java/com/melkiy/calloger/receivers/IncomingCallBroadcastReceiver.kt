@@ -26,24 +26,21 @@ import com.melkiy.calloger.activities.PopupActivity
 
 class IncomingCallBroadcastReceiver : BroadcastReceiver() {
 
-    private var context: Context? = null
-    private var telephonyManager: TelephonyManager? = null
-    private var listener: StateListener = StateListener()
-
     override fun onReceive(context: Context, intent: Intent) {
-        this.context = context
-        telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-        telephonyManager!!.listen(listener, PhoneStateListener.LISTEN_CALL_STATE)
+        val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+        val listener = StateListener(context, telephonyManager)
+        telephonyManager.listen(listener, PhoneStateListener.LISTEN_CALL_STATE)
     }
 
-    private inner class StateListener : PhoneStateListener() {
+    private class StateListener(var context: Context, var telephonyManager: TelephonyManager) : PhoneStateListener() {
+
         override fun onCallStateChanged(state: Int, incomingNumber: String) {
             when (state) {
                 TelephonyManager.CALL_STATE_IDLE -> {
-                    PopupActivity.show(context!!)
+                    PopupActivity.show(context)
                 }
             }
-            telephonyManager!!.listen(listener, PhoneStateListener.LISTEN_NONE)
+            telephonyManager.listen(this, PhoneStateListener.LISTEN_NONE)
         }
     }
 }

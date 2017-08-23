@@ -35,6 +35,6 @@ class CallRecyclerViewHolder(view: View) : RecyclerView.ViewHolder(view) {
     lateinit var icon: ImageView
 
     init {
-        ButterKnife.bind(view)
+        ButterKnife.bind(this, view)
     }
 }

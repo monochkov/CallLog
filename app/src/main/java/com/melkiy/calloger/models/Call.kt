@@ -20,39 +20,19 @@ import org.joda.time.Instant
 
 import java.io.Serializable
 
-class Call : Serializable {
-
-    var name: String? = null
-    var number: String? = null
-    var type: Type? = null
-    var date: Instant? = null
-    var durationInSeconds: Int = 0
-    var message: String? = null
-
-    override fun toString(): String {
-        return "Call{" +
-                ", name='" + name + '\'' +
-                ", number='" + number + '\'' +
-                ", type=" + type +
-                ", date=" + date +
-                ", durationInSeconds=" + durationInSeconds +
-                ", message='" + message + '\'' +
-                '}'
-    }
+data class Call(val name: String?,
+                val number: String,
+                val type: Type,
+                val date: Instant,
+                val durationInSeconds: Int = 0,
+                val message: String = "") : Serializable {
 
     enum class Type(val value: Int) {
         INCOMING(1), OUTGOING(2), MISSED(3), DISMISSED(5);
 
         companion object {
 
-            fun fromValue(value: Int): Type {
-                for (type in values()) {
-                    if (type.value == value) {
-                        return type
-                    }
-                }
-                throw IllegalStateException("There is no type with value " + value)
-            }
+            fun fromValue(value: Int) = values().first { it.value == value }
         }
     }
 }

@@ -27,40 +27,35 @@ import java.util.*
 
 class CallDatabase private constructor(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
-    override fun onCreate(db: SQLiteDatabase) {
-        db.execSQL(QUERY_CREATE_DATABASE)
-    }
+    override fun onCreate(db: SQLiteDatabase) = db.execSQL(QUERY_CREATE_DATABASE)
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {}
 
-    }
-
-    fun insert(call: Call?): Long {
+    fun insert(call: Call): Long {
         val db = writableDatabase
-        val id = db.insert(TABLE_NAME, null, toContentValues(call))
+        val id = db.insert(TABLE_NAME, null, call.toContentValues())
         db.close()
         return id
     }
 
-    val all: MutableList<Call>
-        get() {
-            val db = readableDatabase
-            val list = ArrayList<Call>()
+    fun getAllCalls() : List<Call> {
+        val db = readableDatabase
+        val list = ArrayList<Call>()
 
-            val cursor = db.query(TABLE_NAME, null, null, null, null, null, "id DESC")
-            while (cursor.moveToNext()) {
-                list.add(fromCursor(cursor))
-            }
-            cursor.close()
-            db.close()
-            return list
+        val cursor = db.query(TABLE_NAME, null, null, null, null, null, "id DESC")
+        while (cursor.moveToNext()) {
+            list.add(fromCursor(cursor))
         }
+        cursor.close()
+        db.close()
+        return list
+    }
 
     companion object {
 
-        private var instance : CallDatabase? = null
+        private var instance: CallDatabase? = null
 
-        fun getInstance(context: Context) : CallDatabase {
+        fun getInstance(context: Context): CallDatabase {
             if (instance == null) {
                 synchronized(this) {
                     if (instance == null) {
@@ -71,42 +66,36 @@ class CallDatabase private constructor(context: Context) : SQLiteOpenHelper(cont
             return instance!!
         }
 
-        val QUERY_CREATE_DATABASE = "CREATE TABLE calls\n" +
-                "    (id INTEGER PRIMARY KEY,\n" +
-                "    name TEXT,\n" +
-                "    number TEXT,\n" +
-                "    type INTEGER,\n" +
-                "    date TEXT,\n" +
-                "    duration INTEGER,\n" +
-                "    message TEXT);\n"
+        const val QUERY_CREATE_DATABASE = """CREATE TABLE calls\n
+                    (id INTEGER PRIMARY KEY,\n
+                    name TEXT,\n
+                    number TEXT,\n
+                    value INTEGER,\n
+                    date TEXT,\n
+                    duration INTEGER,\n
+                    message TEXT);\n"""
 
-        val DATABASE_NAME = "calloger.db"
-        val DATABASE_VERSION = 1
-        val TABLE_NAME = "calls"
+        const val DATABASE_NAME = "calloger.db"
+        const val DATABASE_VERSION = 1
+        const val TABLE_NAME = "calls"
 
-        fun fromCursor(cursor: Cursor): Call {
+        private fun fromCursor(cursor: Cursor): Call {
             var i = 1
-            val call = Call()
-            call.name = cursor.getString(i++)
-            call.number = cursor.getString(i++)
-            call.type = Call.Type.fromValue(cursor.getInt(i++))
-            call.date = Instant(cursor.getString(i++))
-            call.durationInSeconds = cursor.getInt(i++)
-            call.message = cursor.getString(i)
-            println(call.toString())
-            return call
+            return Call(name = cursor.getString(i++),
+                    number = cursor.getString(i++),
+                    type = Call.Type.fromValue(cursor.getInt(i++)),
+                    date = Instant(cursor.getString(i++)),
+                    durationInSeconds = cursor.getInt(i++),
+                    message = cursor.getString(i))
         }
 
-        fun toContentValues(call: Call?): ContentValues {
-            val cv = ContentValues()
-            cv.put(Columns.NAME, call?.name)
-            cv.put(Columns.NUMBER, call?.number)
-            cv.put(Columns.TYPE, call?.type?.value)
-            cv.put(Columns.DATE, call?.date.toString())
-            cv.put(Columns.DURATION, call?.durationInSeconds)
-            cv.put(Columns.MESSAGE, call?.message)
-            println(cv.toString())
-            return cv
+        private fun Call.toContentValues() = ContentValues().apply {
+            put(Columns.NAME, name)
+            put(Columns.NUMBER, number)
+            put(Columns.TYPE, type.value)
+            put(Columns.DATE, date.toString())
+            put(Columns.DURATION, durationInSeconds)
+            put(Columns.MESSAGE, message)
         }
     }
 }

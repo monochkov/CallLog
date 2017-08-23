@@ -29,6 +29,6 @@ class CallHeaderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
     lateinit var date: TextView
 
     init {
-        ButterKnife.bind(itemView)
+        ButterKnife.bind(this, itemView)
     }
 }
